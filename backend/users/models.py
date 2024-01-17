@@ -9,7 +9,16 @@ class CustomUser(AbstractUser):
         _('email address'),
         unique=True
     )
-    first_name = models.CharField(max_length=30, blank=False)
-    last_name = models.CharField(max_length=30, blank=False)
+    first_name = models.CharField(
+        max_length=30, blank=False, verbose_name='Имя'
+    )
+    last_name = models.CharField(
+        max_length=30, blank=False, verbose_name='Фамилия'
+    )
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ('-date_joined',)

@@ -23,6 +23,7 @@ class Follow(models.Model):
             ),)
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+        ordering = ('user',)
 
     def __str__(self):
         return (f'Пользователь: {self.user}, '

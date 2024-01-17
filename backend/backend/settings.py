@@ -27,7 +27,8 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'recipes.apps.RecipesConfig',
     'users.apps.UsersConfig',
-    'followers.apps.FollowersConfig'
+    'followers.apps.FollowersConfig',
+    'colorfield',
 ]
 
 MIDDLEWARE = [

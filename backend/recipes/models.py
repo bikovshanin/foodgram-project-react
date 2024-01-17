@@ -1,3 +1,4 @@
+from colorfield.fields import ColorField
 from django.contrib.auth import get_user_model
 from django.db import models
 
@@ -14,6 +15,7 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингридиент'
         verbose_name_plural = 'Ингридиенты'
+        ordering = ('name',)
 
     def __str__(self):
         return f'{self.name}, {self.measurement_unit}'
@@ -21,13 +23,14 @@ class Ingredient(models.Model):
 
 class Tag(models.Model):
     """Модель Тэгов."""
-    name = models.CharField('Название', max_length=20)
-    color = models.CharField('Хекс-код', max_length=16)
+    name = models.CharField(verbose_name='Название', max_length=20)
+    color = ColorField(verbose_name='Хекс-код')
     slug = models.SlugField(unique=True, verbose_name='Идентификатор')
 
     class Meta:
         verbose_name = 'Тег'
         verbose_name_plural = 'Теги'
+        ordering = ('id',)
 
     def __str__(self):
         return self.name
@@ -101,6 +104,7 @@ class RecipeIngredients(models.Model):
     class Meta:
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецептах'
+        ordering = ('ingredient',)
 
     def __str__(self):
         return f'{self.ingredient.name} в рецепте: {self.recipe.name}'
@@ -129,6 +133,7 @@ class Favorite(models.Model):
             ),)
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранное'
+        ordering = ('recipe',)
 
 
 class ShoppingCard(models.Model):
@@ -150,3 +155,4 @@ class ShoppingCard(models.Model):
             ),)
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
+        ordering = ('recipe',)
