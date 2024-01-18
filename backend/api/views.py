@@ -89,7 +89,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True, methods=['post'], url_path='favorite',
-        serializer_class=RecipeShortSerializer,
         permission_classes=(IsAuthenticatedOrReadOnly,)
     )
     def favorite_recipe(self, request, pk=None):
@@ -101,7 +100,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True, methods=['post'], url_path='shopping_cart',
-        serializer_class=RecipeShortSerializer,
         permission_classes=(IsAuthenticatedOrReadOnly,)
     )
     def shopping_cart(self, request, pk=None):
@@ -124,36 +122,36 @@ class SubscribeViewSet(UserViewSet):
             self.permission_classes = (IsAuthenticated,)
         return super().get_permissions()
 
-    @action(detail=True, methods=['POST', 'DELETE'])
+    @action(detail=True, methods=['POST'])
     def subscribe(self, request, id=None):
-        following_user = get_object_or_404(User, id=id)
-        if request.method == 'POST':
-            serializer = FollowSerializer(
-                data={'following': id}, context={'request': request}
-            )
-            serializer.is_valid(raise_exception=True)
-            follow = Follow.objects.create(
-                user=self.request.user, following=following_user
-            )
-            user_serializer = FollowSerializer(
-                follow, context={'request': request}
-            )
+        serializer = FollowSerializer(
+            data={'following': id}, context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(
+            user=self.request.user,
+            following=get_object_or_404(User, id=id)
+        )
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED
+        )
+
+    @subscribe.mapping.delete
+    def unsubscribe(self, request, id=None):
+        try:
+            Follow.objects.get(
+                user=self.request.user,
+                following=get_object_or_404(User, id=id)
+            ).delete()
             return Response(
-                user_serializer.data, status=status.HTTP_201_CREATED
+                {'detail': 'Вы успешно отписались от пользователя.'},
+                status=status.HTTP_204_NO_CONTENT
             )
-        if request.method == 'DELETE':
-            try:
-                Follow.objects.get(
-                    user=self.request.user, following=following_user
-                ).delete()
-                return Response(
-                    {'detail': 'Вы успешно отписались от пользователя.'},
-                    status=status.HTTP_204_NO_CONTENT)
-            except Follow.DoesNotExist:
-                return Response(
-                    {'detail': 'Пользователь не найден.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+        except Follow.DoesNotExist:
+            return Response(
+                {'detail': 'Пользователь не найден.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=False)
     def subscriptions(self, request):
@@ -184,7 +182,9 @@ class ShoppingCartView(APIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
     def get(self, request, *args, **kwargs):
-        shopping_carts = ShoppingCard.objects.filter(user=request.user)
+        shopping_carts = ShoppingCard.objects.filter(
+            user=request.user
+        ).prefetch_related('recipe')
         ingredients_count = self.calculate_ingredients_count(shopping_carts)
         txt_content = self.generate_txt_content(ingredients_count)
         response = HttpResponse(txt_content, content_type='text/plain')
@@ -198,8 +198,6 @@ class ShoppingCartView(APIView):
         for shopping_cart in shopping_carts:
             recipe_ingredients = RecipeIngredients.objects.filter(
                 recipe=shopping_cart.recipe
-            ).select_related(
-                'recipe', 'ingredient'
             ).values('ingredient__id').annotate(amount=Sum('amount'))
             for recipe_ingredient in recipe_ingredients:
                 ingredient_id = recipe_ingredient['ingredient__id']
@@ -212,11 +210,16 @@ class ShoppingCartView(APIView):
 
     def generate_txt_content(self, ingredients_count):
         ingredient_ids = list(ingredients_count.keys())
-        ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
+        ingredients = (
+            Ingredient.objects
+            .filter(id__in=ingredient_ids)
+            .values('id', 'name', 'measurement_unit')
+        )
         txt_content = ''
         for ingredient in ingredients:
-            ingredient_id = ingredient.id
-            amount = ingredients_count[ingredient_id]
-            txt_content += (f'{ingredient.name} - '
-                            f'{amount} {ingredient.measurement_unit}\n')
+            amount = ingredients_count[ingredient['id']]
+            txt_content += (
+                f"{ingredient['name']} - {amount} "
+                f"{ingredient['measurement_unit']}\n"
+            )
         return txt_content

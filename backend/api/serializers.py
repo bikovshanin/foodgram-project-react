@@ -290,6 +290,9 @@ class FollowSerializer(serializers.Serializer):
             )
         return data
 
+    def create(self, validated_data):
+        return Follow.objects.create(**validated_data)
+
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit')
