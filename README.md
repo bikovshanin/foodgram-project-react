@@ -75,8 +75,3 @@ python3 manage.py runserver
 ### Вебсайт доступен по адресу:
 
 https://foodgram.otomari.ru
-
-### Для Ревьюера:
-
-login: admin@admin.ru
-password: admin
