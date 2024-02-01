@@ -4,7 +4,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('SECRET_KEY', default='django-insecure-3-j!3_ifg4671jmp=e1qz2)fbvaxal)txgld6r&b&4np$$3u=b')
+SECRET_KEY = os.getenv('SECRET_KEY', default='string_from_.env')
 CSRF_TRUSTED_ORIGINS = ['https://foodgram.otomari.ru']
 
 DEBUG = False
